@@ -28,23 +28,38 @@ public class SenderEmail : ISenderEmail
     
     public async Task SendeEmail(string email, int id)
     {
-        var verifyUri = new Uri(new Uri(_apiBaseUrl.TrimEnd('/')), "/api/check/" + id);
+        if (string.IsNullOrWhiteSpace(email))
+            throw new ArgumentException("Invalid recipient (email is null or empty).", nameof(email));
+
+        if (!MimeKit.InternetAddress.TryParse(email, out var toAddress))
+            throw new ArgumentException($"Invalid recipient email address: {email}", nameof(email));;
+
+        var baseUri = new Uri(_apiBaseUrl.TrimEnd('/') + "/");
+        var verifyUri = new Uri(baseUri, $"api/check/{id}");
 
         var message = new MimeMessage();
-        message.From.Add(new MailboxAddress(_fromName, _fromAddress));
-        message.To.Add(MailboxAddress.Parse(email));
-        message.Subject = "Verifique sua conta";
+
+        if (!string.IsNullOrWhiteSpace(_fromName))
+            message.From.Add(new MailboxAddress(_fromName, _fromAddress));
+        else
+            message.From.Add(MailboxAddress.Parse(_fromAddress));
+
+        message.To.Add(toAddress);
+        message.Subject = "Verify your account";
 
         message.Body = new TextPart("html")
         {
-            Text = $@"<p>Clique para verificar sua conta:</p>
-                      <p><a href=""{verifyUri}"">Verificar</a></p>"
+            Text = $@"<p>Click the link below to verify your account:</p>
+              <p><a href=""{verifyUri}"">Verify</a></p>"
         };
 
         using var client = new SmtpClient();
         await client.ConnectAsync(_smtpHost, _smtpPort, SecureSocketOptions.StartTls);
-        await client.AuthenticateAsync(_smtpUser, _smtpPass);
+        if (!string.IsNullOrWhiteSpace(_smtpUser))
+            await client.AuthenticateAsync(_smtpUser, _smtpPass);
+
         await client.SendAsync(message);
         await client.DisconnectAsync(true);
     }
+
 }

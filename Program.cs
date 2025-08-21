@@ -7,7 +7,7 @@ var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddHostedService<Worker>();
 builder.Services.AddSingleton<IConnection>(s  =>
 {
-    var factory = new ConnectionFactory() { HostName = "localhost" };
+    var factory = new ConnectionFactory() { HostName = "localhost" ,DispatchConsumersAsync = true};
     return factory.CreateConnection();
 });
 builder.Services.AddSingleton<IRabbitMqConsumerService, RabbitMqConsumerService>();

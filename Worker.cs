@@ -20,7 +20,7 @@ public class Worker : BackgroundService
             if (_logger.IsEnabled(LogLevel.Information))
             {
                 _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-               await  _consumerService.Consume(stoppingToken);
+                _consumerService.Consume(stoppingToken);
                _logger.LogInformation("worker stopped");
             }
 
